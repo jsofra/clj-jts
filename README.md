@@ -10,13 +10,19 @@ More information on JTS can be found at: [Vivid Solutions](http://www.vividsolut
 user> (use 'clj-jts.core)
 
 
+;; Coordinate functions for creating JTS Coordinates
+
+user> (coordinate {:x 1 :y 2})
+#<Coordinate (1.0, 2.0, NaN)>
+
+user> (coordinate {:x 1 :y 2 :z 3})
+#<Coordinate (1.0, 2.0, 3.0)>
+
+
 ;; Geometry functions for creating JTS Geometry from Clojure data
 
-user> (point {:x 1 :y 1})
-#<Point POINT (1 1)>
-
-user> (point {:x 1 :y 2 :z 3})
-#<Point POINT (1 2 3)>
+user> (point {:x 1 :y 2})
+#<Point POINT (1 2)>
 
 user> (line-string [{:x 2 :y 8} {:x 4 :y 3}])
 #<LineString LINESTRING (2 8, 4 3)>
