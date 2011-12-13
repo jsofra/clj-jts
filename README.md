@@ -15,8 +15,8 @@ user> (use 'clj-jts.core)
 user> (point {:x 1 :y 1})
 #<Point POINT (1 1)>
 
-user> (point {:x 1 :y 1 :z 1})
-#<Point POINT (1 1)>
+user> (point {:x 1 :y 2 :z 3})
+#<Point POINT (1 2 3)>
 
 user> (line-string [{:x 2 :y 8} {:x 4 :y 3}])
 #<LineString LINESTRING (2 8, 4 3)>
