@@ -116,7 +116,8 @@
 (defn ->coord-map
   "Convert a JTS Coordinate to a map."
   [^Coordinate coordinate]
-  {:x (.x coordinate) :y (.y coordinate)})
+  (let [coord {:x (.x coordinate) :y (.y coordinate) :z (.z coordinate)}]
+    (if (.isNaN (:z coord)) (dissoc coord :z) coord)))
 
 (defn get-coords
   "Return a vec of map-coords for a JTS Geometry."
