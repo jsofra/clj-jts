@@ -82,9 +82,9 @@
    e.g. (multi-line-string [[{:x 5 :y 5} {:x 2 :y 5} {:x 9 :y 4}]
                             [{:x 6 :y 4} {:x 8 :y 3} {:x 2 :y 3}]])"
   [line-string-coords]
-  (.createMultiLineString geom-factory
-     (into-array LineString
-                 (map #(line-string %) line-string-coords))))
+  (.createMultiLineString
+   geom-factory (into-array LineString
+                            (map #(line-string %) line-string-coords))))
 
 (defn ^MultiPolygon multi-polygon
   "Return a JTS MultiPolgon given a collection of polygon coords.
@@ -93,9 +93,8 @@
                         {:shell [{:x 4 :y 4} {:x 10 :y 4} {:x 10 :y 10}
                                  {:x 4 :y 10} {:x 4 :y 4}]}])"
   [polygon-coords]
-  (.createMultiPolygon geom-factory
-     (into-array Polygon
-                 (map #(polygon %) polygon-coords))))
+  (.createMultiPolygon
+   geom-factory (into-array Polygon (map #(polygon %) polygon-coords))))
 
 (defn geometry
   "Provides a common interface for creating JTS geometry instances.
