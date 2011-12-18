@@ -15,13 +15,16 @@
 
 (def ^:private ^GeometryFactory geom-factory (GeometryFactory.))
 
+(def ^:dynamic coord-keys [:x :y :z])
+
 (defn ^Coordinate coordinate
   "Return a JTS Coordinate given a map with x, y, z keys.
    The z key is optional.
    e.g. (coordinate {:x 1 :y 1})
         (coordinate {:x 1 :y 1 :z 1})"
-  [{:keys [x y z] :or {z Double/NaN}}]
-  (Coordinate. x y z))
+  [coord-map]
+  (let [[x y z] (map coord-map coord-keys)]
+    (if z (Coordinate. x y z) (Coordinate. x y))))
 
 (defn ^"[Lcom.vividsolutions.jts.geom.Coordinate;" ->coord-array
   "Return an array of Corrdinate instances given a collection of coord maps."
@@ -116,8 +119,9 @@
 (defn ->coord-map
   "Convert a JTS Coordinate to a map."
   [^Coordinate coordinate]
-  (let [coord {:x (.x coordinate) :y (.y coordinate) :z (.z coordinate)}]
-    (if (.isNaN (:z coord)) (dissoc coord :z) coord)))
+  (let [[x y z] coord-keys
+        coord {x (.x coordinate) y (.y coordinate) z (.z coordinate)}]
+    (if (.isNaN (z coord)) (dissoc coord z) coord)))
 
 (defn get-coords
   "Return a vec of map-coords for a JTS Geometry."
