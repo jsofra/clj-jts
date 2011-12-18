@@ -104,6 +104,15 @@
   [{:keys [shape coords]}]
   ((ns-resolve 'clj-jts.core (symbol (name shape))) coords))
 
+(defn ^GeometryCollection geometry-collection
+  "Return a JTS GeometryCollection give a collection of shape maps.
+   e.g. (geometry-collection [{:shape :point :coords {:x 4, :y 4}}
+                              {:shape :line-string
+                               :coords [{:x 3 :y 9} {:x 2 :y 7}]}])"
+  [shapes]
+  (.createGeometryCollection
+   geom-factory (into-array Geometry (map geometry shapes))))
+
 (defn get-geometries
   "Return a seq of JTS Geometry that form the a Geometry."
   [^Geometry geometry]
@@ -188,4 +197,8 @@
   MultiPolygon
   (->shape-data [geometry]
     {:shape :multi-polygon
-     :coords (get-multi-coords geometry get-polygon-coords)}))
+     :coords (get-multi-coords geometry get-polygon-coords)})
+  GeometryCollection
+  (->shape-data [geometry]
+    {:shape :geometry-collection
+     :coords (into [] (map ->shape-data (get-geometries geometry)))}))
