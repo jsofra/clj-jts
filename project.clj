@@ -1,4 +1,4 @@
-(defproject clj-jts "1.0.0-SNAPSHOT"
+(defproject meridian/clj-jts "0.0.1-SNAPSHOT"
   :description "clj-jts is a library for creating JTS (Java Topology Suite)
   geometry from Clojure"
   :dependencies [[org.clojure/clojure "1.3.0"]
