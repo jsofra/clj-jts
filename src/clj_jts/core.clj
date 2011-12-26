@@ -17,6 +17,9 @@
 
 (def ^:dynamic coord-keys [:x :y :z])
 
+(defmacro with-coord-keys [keys & body]
+  `(binding [coord-keys ~keys] ~@body))
+
 (defn ^Coordinate coordinate
   "Return a JTS Coordinate given a map with x, y, z keys.
    The z key is optional.
