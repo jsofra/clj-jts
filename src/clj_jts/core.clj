@@ -13,7 +13,7 @@
             Point LineString LinearRing Polygon
             MultiPoint MultiLineString MultiPolygon]))
 
-(def ^:private ^GeometryFactory geom-factory (GeometryFactory.))
+(defonce ^:private ^GeometryFactory geom-factory (GeometryFactory.))
 
 (def ^:dynamic coord-keys [:x :y :z])
 
