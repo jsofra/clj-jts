@@ -1,4 +1,4 @@
-(ns clj-jts.core
+(ns meridian.clj-jts.core
   "clj-jts is a library for creating JTS (Java Topology Suite)
   geometry from Clojure. It allows for the creation of JTS instances
   from Clojure data structures and conversion of JTS instance to
@@ -7,7 +7,7 @@
   More information on JTS can be found at: http://www.vividsolutions.com/jts/main.htm
   "
   {:author "James Sofra"}
-  
+
   (:import [com.vividsolutions.jts.geom
             GeometryFactory Coordinate Geometry GeometryCollection
             Point LineString LinearRing Polygon
@@ -15,21 +15,15 @@
 
 (defonce ^:private ^GeometryFactory geom-factory (GeometryFactory.))
 
-(def ^:dynamic coord-keys [:x :y :z])
-
-(defmacro with-coord-keys [keys & body]
-  `(binding [coord-keys ~keys] ~@body))
-
 (defn ^Coordinate coordinate
   "Return a JTS Coordinate given a map with x, y, z keys.
    The z key is optional.
-   e.g. (coordinate {:x 1 :y 1})
-        (coordinate {:x 1 :y 1 :z 1})"
-  [coord-map]
-  (let [[x y z] (map coord-map coord-keys)]
-    (if z (Coordinate. x y z) (Coordinate. x y))))
+   e.g. (coordinate [1 1])
+        (coordinate [1 1 1])"
+  [[x y & [z]]]
+  (if z (Coordinate. x y z) (Coordinate. x y)))
 
-(defn ^"[Lcom.vividsolutions.jts.geom.Coordinate;" ->coord-array
+(defn ^"[Lcom.vividsolutions.jts.geom.Coordinate;" coord-array
   "Return an array of Corrdinate instances given a collection of coord maps."
   [coords]
   (into-array Coordinate
@@ -37,53 +31,49 @@
 
 (defn ^Point point
   "Return a JTS Point given a coord map.
-   e.g. (point {:x 1 :y 1})
-        (point {:x 1 :y 1 :z 1})"
+   e.g. (point [1 1])
+        (point [1 1 1])"
   [coord]
   (.createPoint geom-factory (coordinate coord)))
 
 (defn ^LineString line-string
   "Return a JTS LineString given a collection of coord maps.
-   e.g. (line-string [{:x 2 :y 8} {:x 4 :y 3}])"
+   e.g. (line-string [[2 8] [4 3]])"
   [coords]
-  (.createLineString geom-factory (->coord-array coords)))
+  (.createLineString geom-factory (coord-array coords)))
 
 (defn ^LinearRing linear-ring
   "Return a JTS LinearRing given a collection of coord maps.
    The first and last coord must be the same.
-   e.g. (linear-ring [{:x 0 :y 0} {:x 10 :y 0} {:x 10 :y 10}
-                      {:x 0 :y 10} {:x 0 :y 0}])"
+   e.g. (linear-ring [[0 0] [10 0] [10 10]
+                      [0 10] [0 0]])"
   [coords]
-  (.createLinearRing geom-factory (->coord-array coords)))
+  (.createLinearRing geom-factory (coord-array coords)))
 
 (defn ^Polygon polygon
   "Return a JTS Polygon given collections of coord maps that should
   form valid linear-rings, one for the exterior polygon shell and
   several for the interior holes. The holes key is optional.
-   e.g. (polygon {:shell [{:x 1 :y 1} {:x 100 :y 1} {:x 100 :y 100}
-                          {:x 1 :y 100} {:x 1 :y 1}]})
+   e.g. (polygon [[[1 1] [100 1] [100 100] [1 100] [1 1]]])
 
-        (polygon {:shell [{:x 1 :y 1} {:x 100 :y 1} {:x 100 :y 100}
-                          {:x 1 :y 100} {:x 1 :y 1}]
-                  :holes [[{:x 5 :y 5} {:x 20 :y 5} {:x 20 :y 20}
-                           {:x 5 :y 20} {:x 5 :y 5}]
-                          [{:x 50 :y 50} {:x 80 :y 50} {:x 80 :y 80}
-                           {:x 50 :y 80} {:x 50 :y 50}]]})"
-  [{:keys [shell holes]}]
+        (polygon [[[1 1] [100 1] [100 100] [1 100] [1 1]]
+                  [[5 5] [20 5] [20 20] [5 20] [5 5]]
+                  [[50 50] [80 50] [80 80] [50 80] [50 50]]])"
+  [[shell & holes]]
   (.createPolygon geom-factory (linear-ring shell)
      (into-array LinearRing
                  (map #(linear-ring %) holes))))
 
 (defn ^MultiPoint multi-point
   "Return a JTS MultiPoint given a colletion of coord maps.
-   e.g. (multi-point [{:x 1 :y 20} {:x 45 :y 5} {:x 10 :y 34}])"
+   e.g. (multi-point [[1 20] [45 5] [10 34]])"
   [coords]
-  (.createMultiPoint geom-factory (->coord-array coords)))
+  (.createMultiPoint geom-factory (coord-array coords)))
 
 (defn ^MultiLineString multi-line-string
   "Return a JTS MultiLineString given a collection of line-string coords.
-   e.g. (multi-line-string [[{:x 5 :y 5} {:x 2 :y 5} {:x 9 :y 4}]
-                            [{:x 6 :y 4} {:x 8 :y 3} {:x 2 :y 3}]])"
+   e.g. (multi-line-string [[[5 5] [2 5] [9 4]]
+                            [[6 4] [8 3] [2 3]]])"
   [line-string-coords]
   (.createMultiLineString
    geom-factory (into-array LineString
@@ -91,10 +81,8 @@
 
 (defn ^MultiPolygon multi-polygon
   "Return a JTS MultiPolgon given a collection of polygon coords.
-   e.g. (multi-polygon [{:shell [{:x 1 :y 1} {:x 100 :y 1} {:x 100 :y 100}
-                                 {:x 1 :y 100} {:x 1 :y 1}]}
-                        {:shell [{:x 4 :y 4} {:x 10 :y 4} {:x 10 :y 10}
-                                 {:x 4 :y 10} {:x 4 :y 4}]}])"
+   e.g. (multi-polygon [[[[1 1] [100 1] [100 100] [1 100] [1 1]]]
+                        [[[4 4] [10 4] [10 10] [4 10] [4 4]]]])"
   [polygon-coords]
   (.createMultiPolygon
    geom-factory (into-array Polygon (map #(polygon %) polygon-coords))))
@@ -102,15 +90,22 @@
 (defn geometry
   "Provides a common interface for creating JTS geometry instances.
    Takes a map specifying the type of shape and the coordinates that form it.
-   e.g. (geometry {:shape :point :coords {:x 1 :y 1}})"
-  [{:keys [shape coords]}]
-  ((ns-resolve 'clj-jts.core (symbol (name shape))) coords))
+   e.g. (geometry {:type :point :coordinates [1 1]})"
+  [{:keys [type coordinates]}]
+  ((case type
+     :Point point
+     :LineString line-string
+     :LinearRing linear-ring
+     :Polygon polygon
+     :MultiPoint multi-point
+     :MultiLineString multi-line-string
+     :MultiPolygon multi-polygon) coordinates))
 
 (defn ^GeometryCollection geometry-collection
   "Return a JTS GeometryCollection give a collection of shape maps.
-   e.g. (geometry-collection [{:shape :point :coords {:x 4, :y 4}}
-                              {:shape :line-string
-                               :coords [{:x 3 :y 9} {:x 2 :y 7}]}])"
+   e.g. (geometry-collection [{:type :point :coordinates [4, 4]}
+                              {:type :line-string
+                               :coordinates [[3 9] [2 7]]}])"
   [shapes]
   (.createGeometryCollection
    geom-factory (into-array Geometry (map geometry shapes))))
@@ -127,22 +122,33 @@
   (for [i (range 0 (.getNumInteriorRing geometry))]
     (.getInteriorRingN geometry i)))
 
-(defn ->coord-map
+(defn coord-map
   "Convert a JTS Coordinate to a map."
   [^Coordinate coordinate]
-  (let [[x y z] coord-keys
-        coord {x (.x coordinate) y (.y coordinate) z (.z coordinate)}]
-    (if (.isNaN (z coord)) (dissoc coord z) coord)))
+  (let [coord {:x (.x coordinate) :y (.y coordinate) :z (.z coordinate)}]
+    (if (.isNaN (:z coord)) (dissoc coord :z) coord)))
+
+(defn coord-vec
+  "Convert a JTS Coordinate to a vector."
+  [^Coordinate coordinate]
+  (if (.isNaN (.z coordinate))
+    [(.x coordinate) (.y coordinate)]
+    [(.x coordinate) (.y coordinate) (.z coordinate)]))
+
+(defn get-point-coord
+  "Return a vector coord."
+  [^Point point]
+  (coord-vec (.getCoordinate point)))
 
 (defn get-coords
-  "Return a vec of map-coords for a JTS Geometry."
+  "Return a vec of coords for a JTS Geometry."
   [^Geometry geometry]
-  (into [] (map ->coord-map (.getCoordinates geometry))))
+  (mapv coord-vec (.getCoordinates geometry)))
 
 (defn get-multi-coords
   "Return a vec of coord data for a JTS GeometryCollection."
   [^GeometryCollection multi-geometry coords-fn]
-  (into [] (map coords-fn (get-geometries multi-geometry))))
+  (mapv coords-fn (get-geometries multi-geometry)))
 
 (defn get-shell-coords
   "Return coord data that represents the shell of a JTS Polygon."
@@ -152,55 +158,52 @@
 (defn get-hole-coords
   "Return a vec of coord data that represents the holes of a JTS Polygon."
   [^Polygon geometry]
-  (into [] (map get-coords (get-interior-rings geometry))))
+  (mapv get-coords (get-interior-rings geometry)))
 
 (defn get-polygon-coords
   "Return a map that holds the shell and holes coord data for a JTS Polygon."
   [^Polygon geometry]
-  (let [coords {:shell (get-shell-coords geometry)
-                :holes (get-hole-coords geometry)}]
-    (if (seq (:holes coords))
-      coords
-      (dissoc coords :holes))))
+  (into [] (concat [(get-shell-coords geometry)]
+                   (get-hole-coords geometry))))
 
 (defprotocol JTSConversions
   (->shape-data [geometry]
     "Return a map of shape data given a JTS geometry instance.
      e.g.
-     (let [jts-point (point {:x 1 :y 2})]
+     (let [jts-point (point [1 2])]
        (->shape-data jts-point))
-     ;=> {:shape :point, :coords {:x 1.0, :y 2.0}}
+     ;=> {:type :point, :coordinates [1.0, 2.0]}
 
-     (let [shape-data (->shape-data (point {:x 1 :y 2}))]
+     (let [shape-data (->shape-data (point [1 2]))]
        (geometry shape-data))
      ;=> #<Point POINT (1 2)>"))
 
 (extend-protocol JTSConversions
   Point
   (->shape-data [geometry]
-    {:shape :point :coords (first (get-coords geometry))})
+    {:type :Point :coordinates (get-point-coord geometry)})
   LineString
   (->shape-data [geometry]
-    {:shape :line-string :coords (get-coords geometry)})
+    {:type :LineString :coordinates (get-coords geometry)})
   LinearRing
   (->shape-data [geometry]
-    {:shape :linear-ring :coords (get-coords geometry)})
+    {:type :LinearRing :coordinates (get-coords geometry)})
   Polygon
   (->shape-data [geometry]
-    {:shape :polygon :coords (get-polygon-coords geometry)})
+    {:type :Polygon :coordinates (get-polygon-coords geometry)})
   MultiPoint
   (->shape-data [geometry]
-    {:shape :multi-point
-     :coords (into [] (flatten (get-multi-coords geometry get-coords)))})
+    {:type :MultiPoint
+     :coordinates (get-multi-coords geometry get-point-coord)})
   MultiLineString
   (->shape-data [geometry]
-    {:shape :multi-line-string
-     :coords (get-multi-coords geometry get-coords)})
+    {:type :MultiLineString
+     :coordinates (get-multi-coords geometry get-coords)})
   MultiPolygon
   (->shape-data [geometry]
-    {:shape :multi-polygon
-     :coords (get-multi-coords geometry get-polygon-coords)})
+    {:type :MultiPolygon
+     :coordinates (get-multi-coords geometry get-polygon-coords)})
   GeometryCollection
   (->shape-data [geometry]
-    {:shape :geometry-collection
-     :coords (into [] (map ->shape-data (get-geometries geometry)))}))
+    {:type :GeometryCollection
+     :coordinates (mapv ->shape-data (get-geometries geometry))}))

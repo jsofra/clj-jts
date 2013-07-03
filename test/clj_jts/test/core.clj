@@ -1,29 +1,29 @@
 (ns clj-jts.test.core
   {:author "James Sofra"}
-  
+
   (:use clojure.test)
   (:require [clj-jts.core :as jts])
   (:import [com.vividsolutions.jts.geom
             Coordinate Point LineString LinearRing Polygon
             MultiPoint MultiLineString MultiPolygon]))
 
-(def point-coords {:x 1.0 :y 1.0})
-(def line-string-coords [{:x 2.0 :y 8.0} {:x 4.0 :y 3.0}])
-(def linear-ring-coords  [{:x 0.0 :y 0.0} {:x 10.0 :y 0.0} {:x 10.0 :y 10.0}
-                           {:x 0.0 :y 10.0} {:x 0.0 :y 0.0}])
-(def polygon-coords {:shell [{:x 1.0 :y 1.0} {:x 100.0 :y 1.0} {:x 100.0 :y 100.0}
-                             {:x 1.0 :y 100.0} {:x 1.0 :y 1.0}]
-                     :holes [[{:x 5.0 :y 5.0} {:x 20.0 :y 5.0} {:x 20.0 :y 20.0}
-                              {:x 5.0 :y 20.0} {:x 5.0 :y 5.0}]
-                             [{:x 50.0 :y 50.0} {:x 80.0 :y 50.0} {:x 80.0 :y 80.0}
-                              {:x 50.0 :y 80.0} {:x 50.0 :y 50.0}]]})
-(def multi-point-coords [{:x 1.0 :y 20.0} {:x 45.0 :y 5.0} {:x 10.0 :y 34.0}])
-(def multi-line-string-coords [[{:x 5.0 :y 5.0} {:x 2.0 :y 5.0} {:x 9.0 :y 4.0}]
-                               [{:x 6.0 :y 4.0} {:x 8.0 :y 3.0} {:x 2.0 :y 3.0}]])
-(def multi-polygon-coords [{:shell [{:x 1.0 :y 1.0} {:x 100.0 :y 1.0} {:x 100.0 :y 100.0}
-                                    {:x 1.0 :y 100.0} {:x 1.0 :y 1.0}]}
-                           {:shell [{:x 4.0 :y 4.0} {:x 10.0 :y 4.0} {:x 10.0 :y 10.0}
-                                    {:x 4.0 :y 10.0} {:x 4.0 :y 4.0}]}])
+(def point-coords [1.0 1.0])
+(def line-string-coords [[2.0 8.0] [4.0 3.0]])
+(def linear-ring-coords  [[0.0 0.0] [10.0 0.0] [10.0 10.0]
+                          [0.0  10.0] [0.0 0.0]])
+(def polygon-coords [[[1.0 1.0] [100.0 1.0] [100.0 100.0]
+                      [1.0 100.0] [1.0  1.0]]
+                     [[5.0 5.0] [20.0 5.0] [20.0 20.0]
+                      [5.0 20.0] [5.0 5.0]]
+                     [[50.0 50.0] [80.0 50.0] [80.0  80.0]
+                      [50.0 80.0] [50.0 50.0]]])
+(def multi-point-coords [[1.0 20.0] [45.0 5.0] [10.0 34.0]])
+(def multi-line-string-coords [[[5.0 5.0] [2.0 5.0] [9.0  4.0]]
+                               [[6.0 4.0] [8.0  3.0] [2.0 3.0]]])
+(def multi-polygon-coords [[[[1.0 1.0] [100.0 1.0] [100.0 100.0]
+                             [1.0 100.0] [1.0 1.0]]]
+                           [[[4.0 4.0] [10.0 4.0] [10.0 10.0]
+                             [4.0 10.0] [4.0 4.0]]]])
 
 (deftest jts-coordinate-test
   (is (instance? Coordinate (jts/coordinate point-coords))))
@@ -41,22 +41,22 @@
 
 (deftest jts-geometry-factory-test
   (are [class shape coords]
-       (instance? class (jts/geometry {:shape shape :coords coords}))
-       Point :point point-coords
-       LineString :line-string line-string-coords
-       LinearRing :linear-ring linear-ring-coords
-       Polygon :polygon polygon-coords
-       MultiPoint :multi-point multi-point-coords
-       MultiLineString :multi-line-string multi-line-string-coords
-       MultiPolygon :multi-polygon multi-polygon-coords))
+       (instance? class (jts/geometry {:type shape :coordinates coords}))
+       Point :Point point-coords
+       LineString :LineString line-string-coords
+       LinearRing :LinearRing linear-ring-coords
+       Polygon :Polygon polygon-coords
+       MultiPoint :MultiPoint multi-point-coords
+       MultiLineString :MultiLineString multi-line-string-coords
+       MultiPolygon :MultiPolygon multi-polygon-coords))
 
 (deftest jts-conversions-test
-  (are [shape coords] (= {:shape shape :coords coords}
-                         (jts/->shape-data (jts/geometry {:shape shape :coords coords})))
-       :point point-coords
-       :line-string line-string-coords
-       :linear-ring linear-ring-coords
-       :polygon polygon-coords
-       :multi-point multi-point-coords
-       :multi-line-string multi-line-string-coords
-       :multi-polygon multi-polygon-coords))
+  (are [shape coords] (= {:type shape :coordinates coords}
+                         (jts/->shape-data (jts/geometry {:type shape :coordinates coords})))
+       :Point point-coords
+       :LineString line-string-coords
+       :LinearRing linear-ring-coords
+       :Polygon polygon-coords
+       :MultiPoint multi-point-coords
+       :MultiLineString multi-line-string-coords
+       :MultiPolygon multi-polygon-coords))
