@@ -1,4 +1,4 @@
-(ns meridian.clj-jts.core
+(ns meridian.clj-jts
   "clj-jts is a library for creating JTS (Java Topology Suite)
   geometry from Clojure. It allows for the creation of JTS instances
   from Clojure data structures and conversion of JTS instance to
@@ -11,7 +11,9 @@
   (:import [com.vividsolutions.jts.geom
             GeometryFactory Coordinate Geometry GeometryCollection
             Point LineString LinearRing Polygon
-            MultiPoint MultiLineString MultiPolygon]))
+            MultiPoint MultiLineString MultiPolygon])
+  (:require [meridian.shapes.protocols :as msp]
+            [meridian.shapes :as ms]))
 
 (defonce ^:private ^GeometryFactory geom-factory (GeometryFactory.))
 
@@ -87,28 +89,31 @@
   (.createMultiPolygon
    geom-factory (into-array Polygon (map #(polygon %) polygon-coords))))
 
-(defn geometry
+(declare geometry-collection)
+
+(defn map->jts
   "Provides a common interface for creating JTS geometry instances.
    Takes a map specifying the type of shape and the coordinates that form it.
-   e.g. (geometry {:type :point :coordinates [1 1]})"
-  [{:keys [type coordinates]}]
-  ((case type
-     :Point point
-     :LineString line-string
-     :LinearRing linear-ring
-     :Polygon polygon
-     :MultiPoint multi-point
-     :MultiLineString multi-line-string
-     :MultiPolygon multi-polygon) coordinates))
+   e.g. (geometry {:type :Point :coordinates [1 1]})"
+  [{:keys [type coordinates] :as geom}]
+  (if (= type :GeometryCollection)
+    (geometry-collection (:geometries geom))
+    (({:Point point
+       :LineString line-string
+       :LinearRing linear-ring
+       :Polygon polygon
+       :MultiPoint multi-point
+       :MultiLineString multi-line-string
+       :MultiPolygon multi-polygon} type) coordinates)))
 
 (defn ^GeometryCollection geometry-collection
-  "Return a JTS GeometryCollection give a collection of shape maps.
+  "Return a JTS GeometryCollection given a collection of geometry maps.
    e.g. (geometry-collection [{:type :point :coordinates [4, 4]}
                               {:type :line-string
                                :coordinates [[3 9] [2 7]]}])"
-  [shapes]
+  [geometries]
   (.createGeometryCollection
-   geom-factory (into-array Geometry (map geometry shapes))))
+   geom-factory (into-array Geometry (map map->jts geometries))))
 
 (defn get-geometries
   "Return a seq of JTS Geometry that form the a Geometry."
@@ -166,44 +171,72 @@
   (into [] (concat [(get-shell-coords geometry)]
                    (get-hole-coords geometry))))
 
-(defprotocol JTSConversions
-  (->shape-data [geometry]
-    "Return a map of shape data given a JTS geometry instance.
-     e.g.
-     (let [jts-point (point [1 2])]
-       (->shape-data jts-point))
-     ;=> {:type :point, :coordinates [1.0, 2.0]}
-
-     (let [shape-data (->shape-data (point [1 2]))]
-       (geometry shape-data))
-     ;=> #<Point POINT (1 2)>"))
-
-(extend-protocol JTSConversions
+(extend-protocol msp/Coercive
   Point
-  (->shape-data [geometry]
-    {:type :Point :coordinates (get-point-coord geometry)})
+  (coerce [geometry]
+    (ms/point (get-point-coord geometry)))
   LineString
-  (->shape-data [geometry]
-    {:type :LineString :coordinates (get-coords geometry)})
+  (coerce [geometry]
+    (ms/line-string (get-coords geometry)))
   LinearRing
-  (->shape-data [geometry]
-    {:type :LinearRing :coordinates (get-coords geometry)})
+  (coerce [geometry]
+    (ms/linear-ring (get-coords geometry)))
   Polygon
-  (->shape-data [geometry]
-    {:type :Polygon :coordinates (get-polygon-coords geometry)})
+  (coerce [geometry]
+    (ms/polygon (get-polygon-coords geometry)))
   MultiPoint
-  (->shape-data [geometry]
-    {:type :MultiPoint
-     :coordinates (get-multi-coords geometry get-point-coord)})
+  (coerce [geometry]
+    (ms/multi-point (get-multi-coords geometry get-point-coord)))
   MultiLineString
-  (->shape-data [geometry]
-    {:type :MultiLineString
-     :coordinates (get-multi-coords geometry get-coords)})
+  (coerce [geometry]
+    (ms/multi-line-string (get-multi-coords geometry get-coords)))
   MultiPolygon
-  (->shape-data [geometry]
-    {:type :MultiPolygon
-     :coordinates (get-multi-coords geometry get-polygon-coords)})
+  (coerce [geometry]
+    (ms/multi-polygon (get-multi-coords geometry get-polygon-coords)))
   GeometryCollection
-  (->shape-data [geometry]
-    {:type :GeometryCollection
-     :coordinates (mapv ->shape-data (get-geometries geometry))}))
+  (coerce [geometry]
+    (ms/geometry-collection (mapv msp/coerce (get-geometries geometry)))))
+
+(defn ->shape [geometry]
+  (msp/coerce geometry))
+
+;; Extend to Shape protocols
+
+(extend-type Geometry
+  msp/ConstructiveSolidGeometry
+  (union [this others] (reduce #(.union %1 %2) (cons this others)))
+  (difference [this others] (reduce #(.difference %1 %2) (cons this others)))
+  (sym-difference [this others] (reduce #(.symDifference %1 %2) (cons this others)))
+  (intersection [this others] (reduce #(.intersection %1 %2) (cons this others)))
+
+  msp/SpatialConstruction
+  (boundary [geometry] (.boundary geometry))
+  (buffer [geometry distance] (.buffer geometry distance))
+  (convex-hull [geometry] (.convexHull geometry))
+  (bounding-box [geometry] (.getEnvelope geometry))
+
+  msp/SpatialRelations
+  (intersects? [this other] (.intersects this other))
+  (disjoint? [this other] (.disjoint this other))
+  (contains? [this other] (.contains this other))
+  (within? [this other] (.within this other))
+  (covers? [this other] (.covers this other))
+  (covered-by? [this other] (.coveredBy this other))
+  (crosses? [this other] (.crosses this other))
+  (overlaps? [this other] (.overlaps this other))
+  (touches? [this other] (.touches this other))
+  (relate? [this other] (.relate this other))
+  (within-distance? [this other distance] (.isWithinDistance this other distance))
+  (distance [this other] (.distance this other))
+
+  msp/Measurable
+  (area [geometry] (.getArea geometry))
+  (length [geometry] (.getLength geometry))
+
+  msp/Locatable
+  (centroid [geometry] (.getCentroid geometry))
+  (interior-point [geometry] (.getInteriorPoint geometry))
+  (envelope [geometry] (.getEnvelopeInternal geometry))
+
+  msp/SimplicityTest
+  (simple? [geometry] (.isSimple geometry)))

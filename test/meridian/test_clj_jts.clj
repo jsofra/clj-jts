@@ -1,8 +1,9 @@
-(ns clj-jts.test.core
+(ns meridian.test-clj-jts
   {:author "James Sofra"}
 
   (:use clojure.test)
-  (:require [clj-jts.core :as jts])
+  (:require [meridian.clj-jts :as jts]
+            [meridian.flatland :as fl])
   (:import [com.vividsolutions.jts.geom
             Coordinate Point LineString LinearRing Polygon
             MultiPoint MultiLineString MultiPolygon]))
@@ -41,7 +42,7 @@
 
 (deftest jts-geometry-factory-test
   (are [class shape coords]
-       (instance? class (jts/geometry {:type shape :coordinates coords}))
+       (instance? class (jts/map->jts {:type shape :coordinates coords}))
        Point :Point point-coords
        LineString :LineString line-string-coords
        LinearRing :LinearRing linear-ring-coords
@@ -51,8 +52,8 @@
        MultiPolygon :MultiPolygon multi-polygon-coords))
 
 (deftest jts-conversions-test
-  (are [shape coords] (= {:type shape :coordinates coords}
-                         (jts/->shape-data (jts/geometry {:type shape :coordinates coords})))
+  (are [shape coords] (= (fl/map->geometry {:type shape :coordinates coords})
+                         (fl/->geometry (jts/map->jts {:type shape :coordinates coords})))
        :Point point-coords
        :LineString line-string-coords
        :LinearRing linear-ring-coords
