@@ -3,7 +3,7 @@
 
   (:use clojure.test)
   (:require [meridian.clj-jts :as jts]
-            [meridian.flatland :as fl])
+            [meridian.shapes :as ms])
   (:import [com.vividsolutions.jts.geom
             Coordinate Point LineString LinearRing Polygon
             MultiPoint MultiLineString MultiPolygon]))
@@ -52,8 +52,8 @@
        MultiPolygon :MultiPolygon multi-polygon-coords))
 
 (deftest jts-conversions-test
-  (are [shape coords] (= (fl/map->geometry {:type shape :coordinates coords})
-                         (fl/->geometry (jts/map->jts {:type shape :coordinates coords})))
+  (are [shape coords] (= (ms/map->geometry {:type shape :coordinates coords})
+                         (ms/->geometry (jts/map->jts {:type shape :coordinates coords})))
        :Point point-coords
        :LineString line-string-coords
        :LinearRing linear-ring-coords
