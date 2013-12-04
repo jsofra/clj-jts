@@ -32,20 +32,20 @@
               (map #(coordinate %) coords)))
 
 (defn ^Point point
-  "Return a JTS Point given a coord map.
+  "Return a JTS Point given a coord vector.
    e.g. (point [1 1])
         (point [1 1 1])"
   [coord]
   (.createPoint geom-factory (coordinate coord)))
 
 (defn ^LineString line-string
-  "Return a JTS LineString given a collection of coord maps.
+  "Return a JTS LineString given a collection of coord vectors.
    e.g. (line-string [[2 8] [4 3]])"
   [coords]
   (.createLineString geom-factory (coord-array coords)))
 
 (defn ^LinearRing linear-ring
-  "Return a JTS LinearRing given a collection of coord maps.
+  "Return a JTS LinearRing given a collection of coord vectors.
    The first and last coord must be the same.
    e.g. (linear-ring [[0 0] [10 0] [10 10]
                       [0 10] [0 0]])"
@@ -53,9 +53,9 @@
   (.createLinearRing geom-factory (coord-array coords)))
 
 (defn ^Polygon polygon
-  "Return a JTS Polygon given collections of coord maps that should
+  "Return a JTS Polygon given collections of coord vectors that should
   form valid linear-rings, one for the exterior polygon shell and
-  several for the interior holes. The holes key is optional.
+  multiple for the interior holes.
    e.g. (polygon [[[1 1] [100 1] [100 100] [1 100] [1 1]]])
 
         (polygon [[[1 1] [100 1] [100 100] [1 100] [1 1]]
@@ -67,7 +67,7 @@
                  (map #(linear-ring %) holes))))
 
 (defn ^MultiPoint multi-point
-  "Return a JTS MultiPoint given a colletion of coord maps.
+  "Return a JTS MultiPoint given a colletion of coord vectors.
    e.g. (multi-point [[1 20] [45 5] [10 34]])"
   [coords]
   (.createMultiPoint geom-factory (coord-array coords)))
@@ -107,7 +107,7 @@
        :MultiPolygon multi-polygon} type) coordinates)))
 
 (defn ^GeometryCollection geometry-collection
-  "Return a JTS GeometryCollection given a collection of geometry maps.
+  "Return a JTS GeometryCollection given a collection of geometry vectors.
    e.g. (geometry-collection [{:type :point :coordinates [4, 4]}
                               {:type :line-string
                                :coordinates [[3 9] [2 7]]}])"
