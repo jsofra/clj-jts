@@ -8,6 +8,12 @@ Meridian clj-jts provides an implementation of the abstractions defined in Merid
 
 Meridian clj-jts now uses the geometry structures defined in the [GeoJSON] (http://www.geojson.org/) specification to maintain Meridian Shapes compatiblity and to conform to a standard.
 
+## Installation
+
+Add the following dependency to your `project.clj` file:
+
+    [meridian/clj-jts "0.1.0"]
+
 ## Usage
 
 ```clojure
@@ -71,6 +77,13 @@ user> (jts/->shape (jts/point [1 1]))
 user> (jts/->shape (jts/line-string [[2 8] [4 3]]))
 {:type :line-string :coordinates [[2.0 8.0] [4.0 3.0]]}
 ```
+
+## Changes
+
+Since 0.0.1
+* Major breaking changes since v0.0.1
+   - Now comforms to GeoJSON structures
+   - Implements that Meridian Shapes abstraction so that operations can be performed using that abstraction
 
 ## License
 
