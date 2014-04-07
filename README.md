@@ -12,7 +12,7 @@ Meridian clj-jts now uses the geometry structures defined in the [GeoJSON] (http
 
 Add the following dependency to your `project.clj` file:
 
-    [meridian/clj-jts "0.1.0"]
+    [meridian/clj-jts "0.0.2"]
 
 ## Usage
 
